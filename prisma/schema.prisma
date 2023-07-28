@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(cuid())
+
+  username String @unique
+  password String
+
+  // Custom fields
+  bio      String?
+  location String?
+
+  // Images
+  profilePicture String?
+  bannerPicture  String?
+
+  // Flags
+  developer Boolean @default(false)
+  staff     Boolean @default(false)
+  verified  Boolean @default(false)
+  banned    Boolean @default(false)
+
+  // Relations
+  thoughts  Thought[]
+  likes     Like[]
+  follows   Follow[]  @relation("UserFollows")
+  followers Follow[]  @relation("UserFollowedBy")
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Follow {
+  id String @id @default(cuid())
+
+  // Relations
+  from   User   @relation(fields: [fromId], references: [id], name: "UserFollows")
+  fromId String
+
+  to   User   @relation(fields: [toId], references: [id], name: "UserFollowedBy")
+  toId String
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fromId, toId])
+}
+
+model Like {
+  id String @id @default(cuid())
+
+  // Relations
+  from   User   @relation(fields: [fromId], references: [id])
+  fromId String
+
+  to   Thought @relation(fields: [toId], references: [id])
+  toId String
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Thought {
+  id String @id @default(cuid())
+
+  content String
+
+  // Relations
+  from   User   @relation(fields: [fromId], references: [id])
+  fromId String
+
+  replies Thought[] @relation("ThoughtReplies")
+  likes   Like[]
+
+  replyTo   Thought? @relation(fields: [replyToId], references: [id], name: "ThoughtReplies")
+  replyToId String?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
